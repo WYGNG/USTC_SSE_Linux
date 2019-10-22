@@ -1,0 +1,69 @@
+*******基于徐涛和常承启的重点笔记来找的网络地址，PPT是看不下去的，这辈子也看不下去的*********
+
+1.Linux进程调度思想：基本结构，效率优先，兼顾公平，睡眠（等待）时间 * 进程
+https://blog.csdn.net/gatieme/article/details/51701149
+https://blog.csdn.net/xinyuan510214/article/details/50517559
+实时进程，非实时（交互与批处理）
+效率优先，兼顾公平
+
+2.设备驱动程序怎么被找到的 * 驱动
+https://blog.csdn.net/qianghaohao/article/details/79058121
+对设备的用户级访问往往要通过位于/dev目录下的特殊设备文件。内核把对这些文件操作映射到对驱动程序代码的调用上面。
+大多数硬件设备都在/dev目录中有一个对应的设备文件，网络设备除外。在/dev中的每个文件都有与之相关的主设备号和一个次设备号。内核用这些设备号把对一个设备文件的引用映射到相应的驱动程序上。主设备号标明与文件相关的驱动程序（换句话说是设备类型）。次设备号常常是指定某种给定设备类型的特定实例，次设备号有时被称为单元号。
+设备文件分两种类型：
+    块设备文件：
+    一个块设备文件每次读取或者写入一块数据（一组字节，通常是521的倍数），我们熟知的磁盘就是块设备，在/dev中对应的设备文件就是块设备文件。块设备文件在用ls -l查看时文件类型为b。
+    字符设备文件：
+    字符设备每次读取或者写入一个字节。磁盘和磁带可以是块设备也可以是字符设备，而终端和打印机不行。字符设备文件在用ls -l查看时文件类型为c。
+在Linux下，一般不需要手动创建设备文件，因为在Linux下设备文件的创建有专门的udev系统来管理，当系统有新的设备出现（或者消失），会动态地管理设备文件的创建和删除。守护进程udevd监听内核传来的有关设备状态变化的消息。根据/etc/udev 和/lib/udev两个目录的配置信息，在找到设备或者断开设备的时候，udevd能够自动采取相应措施。在默认情况下，它只创建/dev里的设备文件。手动创建设备文件用mknod命令来创建。
+
+3.为什么点击键盘产生中断——键盘点击产生中断的过程 * 中断
+https://blog.csdn.net/tyler_download/article/details/52770376
+https://blog.csdn.net/Lulipeng_cpp/article/details/8178672
+当用户按键时，键盘接口会得到一个代表该按键的键盘扫描码，同时产生一个中断请求。
+键盘中断服务程序先从键盘接口取得按键的扫描码，然后根据其扫描码判断用户所按的键并作相应的处理，最后通知中断控制器本次中断结束并实现中断返回。
+
+
+4.fd是什么东西，fd.open与fd.write * 文件系统
+文件描述符
+https://blog.csdn.net/cywosp/article/details/38965239
+
+
+5.文件系统：已注册文件和mount系统的关系 * 文件系统
+https://www.ibm.com/developerworks/cn/linux/l-vfs/index.html
+https://blog.csdn.net/tigerjibo/article/details/6022700
+http://blog.sina.com.cn/s/blog_828e50020101fpbl.html
+Linux内核是可加载的，许多模块式可选的，只有真正需要使用时才加载他们。文件系统注册过程就是把对应某类型文件系统相关的模块加载到内核，并创建相关的数据结构。每个文件系统模块都有一个初始化例程，它的作用就是VFS中进行注册，即填写一个叫做file_system_type的数据结构。所有已注册的文件系统的file_system_type结构形成一个链表，我们把这个链表称为注册链表。
+每个设备在mount时都要搜索该注册链表，选择适合自己设备文件系统的一项，并从中取出read_super()函数获取设备的超级块（存储在具体设备上，记录存储设备各种信息的一个存储块），并解析其内容。因为每种类型文件系统的超级块的格式不同，并且各自有特定的信息，每种文件系统必须使用对应的解析函数，否则内核就因为不认识该文件系统而无法完成安装。这就是注册文件系统的意义所在。（生成对应file_system_type文件系统结构并提供相应的xxx_get_sb函数）
+
+ 
+7.根文件系统内容，根文件系统初始化，根文件系统挂载
+https://blog.csdn.net/LEON1741/article/details/78159754
+https://blog.csdn.net/DLUTBruceZhang/article/details/9287093
+https://blog.csdn.net/luomoweilan/article/details/20157843
+
+1.创建必要的挂载点目录/dev、/root、/sys、/proc等；然后，将VFS中的sysfs挂载到rootfs的/sys目录下，将tmpfs挂载到/dev目录下（/dev的文件系统类型为tmpfs）；最后，为了输出打印信息，创建了/dev/console、/dev/null两个特殊的设备文件。
+2.磁盘文件系统的挂载一般有两种方式：本地方式和网络方式。根据BOOT变量的值，init选择执行本地加载或者网络加载，如果是本地加载则执行/scripts/local脚本；如果是网络加载则执行/scripts/nfs脚本。个人pc一般都是本地加载，数据中心的服务器一般是nfs加载。最后，由init程序调用/scripts/local脚本挂载磁盘文件系统。
+3.成功挂载磁盘文件系统后，需要将rootfs下的/sys、/proc、/dev等重要的目录都迁移到磁盘文件系统下。最后，通过调用/sbin/run-init程序将内核的根文件系统从rootfs切换到磁盘文件系统的根目录。
+
+10.uboot的移植与CPU移植
+http://patton.spaces.eepw.com.cn/articles/article/item/23450
+https://www.cnblogs.com/xiaojiang1025/p/6106431.html
+
+
+获得发布的最新版本U-Boot源码,阅读相关文档,配置编译环境,在建立的开发环境下进行移植工作。
+在目标板与开发主机间接入硬件调试器。这是进行U-Boot移植应当具备且非常关键的调试工具。
+如果在参考开发板上移植U-Boot，可能需要移除目标板上已有的BOOT LOADER。
+
+
+****和嵌入式系统设计一样的问题****
+
+
+
+6、8和9的答案：https://xq99.me/category/嵌入式系统课程要点/
+6.内核启动 * 启动过程
+8.交叉编译环境建立
+9.嵌入式Linux开发主要软件工作
+
+
+11.不同平台移植后的程序无法运行原因分析 缺少必要的运行库，或者程序没有被烧录进去。
